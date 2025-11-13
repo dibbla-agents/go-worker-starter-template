@@ -21,6 +21,8 @@ A production-ready Go template for building worker systems with gRPC, job orches
 
 ## 🎯 Quick Start
 
+### Option 1: Standalone Project (Recommended)
+
 1. **Use this template** - Click "Use this template" button on GitHub
 2. **Clone your new repository**
    ```bash
@@ -28,6 +30,33 @@ A production-ready Go template for building worker systems with gRPC, job orches
    cd YOUR_PROJECT_NAME
    ```
 3. **Follow the setup guide** - See [GETTING_STARTED.md](GETTING_STARTED.md)
+
+### Option 2: Add to Existing Repo (Monorepo)
+
+To add this template inside an existing repository (e.g., `codex/automations/my-worker/`):
+
+```bash
+# 1. Navigate to your repo's subdirectory
+cd codex/automations/
+
+# 2. Clone this template with your project name
+git clone https://github.com/dibbla-agents/go-worker-starter-template.git my-worker
+
+# 3. Remove the template's git history (IMPORTANT!)
+cd my-worker
+rm -rf .git  # Linux/Mac
+# OR: Remove-Item -Recurse -Force .git  # Windows PowerShell
+
+# 4. Update go.mod module name to match your repo structure
+# Change: module github.com/YOUR_ORG/codex/automations/my-worker
+
+# 5. Commit to your main repo
+cd ../..  # Back to codex root
+git add automations/my-worker
+git commit -m "Add my-worker from template"
+```
+
+**Why remove `.git`?** Each repo can only have one `.git` folder. Removing the template's `.git` makes it a regular folder that your main repo can track.
 
 ## 📚 Documentation
 
