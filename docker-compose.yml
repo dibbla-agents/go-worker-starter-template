@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  worker:
+    image: worker:latest
+    container_name: worker
+    restart: unless-stopped
+    # Load environment variables from .env file
+    env_file:
+      - .env
+    environment:
+      # Add any additional environment variables here
+      # Example: - DATA_DIR=/app/data
+      - TZ=UTC
+    # Add volumes if your worker needs persistent storage or file access
+    # volumes:
+    #   - app-data:/app/data
+    networks:
+      - worker-network
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "worker"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Example: Add additional services if needed (database, nginx, etc.)
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: worker-nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:80"
+  #   volumes:
+  #     - app-data:/usr/share/nginx/html/data:ro
+  #   networks:
+  #     - worker-network
+  #   depends_on:
+  #     - worker
+
+networks:
+  worker-network:
+    driver: bridge
+
+# Uncomment if you need persistent volumes
+# volumes:
+#   app-data:
+#     driver: local
+

@@ -1,0 +1,57 @@
+# Stage 1: Build the Go binary
+FROM golang:1.23-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates
+
+# Set working directory in build context root
+WORKDIR /build
+
+# IMPORTANT: Copy SDK dependencies (required for worker)
+# Before building, you must:
+# 1. Clone the SDK repository from GitHub
+# 2. Update the paths below to match your local SDK location
+# 3. Update go.mod replace directives to match Docker build context
+# See docs/how_to/docker_deployment.md for detailed instructions
+COPY sdk-go/sdk ./sdk-go/sdk
+COPY sdk-go/internal ./sdk-go/internal
+
+# Copy your worker project
+COPY . ./worker-project
+
+# Set working directory to the project
+WORKDIR /build/worker-project
+
+# Fix go.mod replace directives for Docker build context
+# Adjust these paths based on your actual SDK location
+RUN sed -i 's|/path/to/your/sdk-go/sdk|../sdk-go/sdk|g' go.mod && \
+    sed -i 's|/path/to/your/sdk-go/internal|../sdk-go/internal|g' go.mod
+
+# Download Go dependencies
+RUN go mod download
+
+# Build the worker binary
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /worker ./cmd/worker
+
+# Stage 2: Create minimal runtime image
+FROM alpine:latest
+
+# Install runtime dependencies
+RUN apk --no-cache add ca-certificates tzdata
+
+# Create app directory
+WORKDIR /app
+
+# Copy the binary from builder
+COPY --from=builder /worker /app/worker
+
+# Set timezone to UTC
+ENV TZ=UTC
+
+# Health check - adjust based on your worker implementation
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD pgrep -f worker || exit 1
+
+# Run the worker
+CMD ["/app/worker"]
+

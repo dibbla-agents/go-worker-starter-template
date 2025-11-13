@@ -1,0 +1,31 @@
+# Environment variables
+.env
+
+# Credentials files (actual credentials, not templates)
+docs/credentials/*
+!docs/credentials/README.md
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace file
+go.work
+
+# IDE
+.vscode/
+!.vscode/launch.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
