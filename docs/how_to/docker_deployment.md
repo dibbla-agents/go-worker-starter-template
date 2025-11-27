@@ -8,19 +8,32 @@ cd /path/to/your/worker
 
 ## Commands:
 
-### 1. Build the image using docker-compose
+### 1. Navigate to parent directory for build context
 
 ```bash
+cd /your-projects  # Parent directory containing sdk-go, jobs-sdk-go, and your worker
+```
+
+### 2. Build the image using docker-compose
+
+```bash
+# From parent directory:
+docker compose -f codex/automations/your-worker/docker-compose.yml build --no-cache worker
+```
+
+Or from the worker directory (using relative context):
+```bash
+cd codex/automations/your-worker
 docker compose build --no-cache worker
 ```
 
-### 2. Stop and remove old container
+### 3. Stop and remove old container
 
 ```bash
 docker compose down worker
 ```
 
-### 3. Run the updated container with enforced resource limits
+### 4. Run the updated container with enforced resource limits
 
 ```bash
 docker compose --compatibility up worker -d
@@ -29,7 +42,7 @@ docker compose --compatibility up worker -d
 ⚠️ **IMPORTANT**: The `--compatibility` flag ensures memory/CPU limits are enforced!  
 Without it, the 512M memory limit in docker-compose.yml is ignored and memory leaks can affect other services.
 
-### 4. Verify resource limits are active (CRITICAL SAFETY CHECK)
+### 5. Verify resource limits are active (CRITICAL SAFETY CHECK)
 
 ```bash
 # Check if memory limit is enforced (should show 536870912 = 512MB)
@@ -38,7 +51,7 @@ docker inspect <your-worker-container-name> --format='Memory Limit: {{.HostConfi
 # If it shows 0, limits are NOT enforced - STOP and redeploy with --compatibility flag!
 ```
 
-### 5. Monitor memory usage (recommended for first 5-10 minutes after deployment)
+### 6. Monitor memory usage (recommended for first 5-10 minutes after deployment)
 
 ```bash
 # Real-time memory monitoring
@@ -52,7 +65,7 @@ Expected behavior:
 - Memory should stay under 450MB (GOMEMLIMIT triggers GC)
 - If it reaches 512MB, container will be killed by OOM (protecting other services)
 
-### 6. View logs (real-time)
+### 7. View logs (real-time)
 
 ```bash
 docker compose logs worker -f
@@ -64,7 +77,7 @@ Or with limit:
 docker compose logs --tail=50 worker
 ```
 
-### 7. Check status
+### 8. Check status
 
 ```bash
 docker ps --filter "name=<your-worker-container-name>"
@@ -99,6 +112,7 @@ dmesg | grep -i "oom" | tail -20
 ## Safe Deployment Best Practices
 
 ### Pre-deployment checklist
+- [ ] Set restart policy appropriately (`restart: "no"` for testing, `on-failure:3` for limited retries)
 - [ ] Create backup image (see below)
 - [ ] Ensure you have terminal access with emergency stop command ready
 - [ ] Deploy during low-traffic period with team on standby
@@ -207,11 +221,33 @@ docker build -f codex/automations/your-worker/Dockerfile.worker -t worker:latest
 Required variables in `.env` file:
 
 ```env
+# Worker configuration
 SERVER_NAME=your-worker-name
-GRPC_SERVER_ADDRESS=localhost:50051
+GRPC_SERVER_ADDRESS=0.0.0.0:50051
 SERVER_API_TOKEN=your-api-token
-LOG_LEVEL=info
-GOMEMLIMIT=450MiB
+
+# Database configuration (if needed)
+# DB_HOST=localhost
+# DB_PORT=5432
+# DB_USER=postgres
+# DB_PASSWORD=your-password
+# DB_NAME=your-database
+
+# OpenAI configuration (if needed)
+# OPENAI_API_KEY=your-api-key
+
+# Debug mode
+CODEX_DEBUG=false
+```
+
+**Note**: The `GOMEMLIMIT=450MiB` is set in docker-compose.yml and doesn't need to be in .env
+
+**Using defaults in docker-compose.yml**:
+```yaml
+environment:
+  - SERVER_NAME=${SERVER_NAME:-your-worker-name}  # Uses .env value or default
+  - GRPC_SERVER_ADDRESS=${GRPC_SERVER_ADDRESS:-0.0.0.0:50051}
+  - CODEX_DEBUG=${CODEX_DEBUG:-false}
 ```
 
 ### Volumes
@@ -244,6 +280,25 @@ networks:
 ---
 
 ## Production Tips
+
+**Restart Policy:**
+```yaml
+# Development/Testing (prevents restart loops on crashes):
+restart: "no"
+
+# Recommended: Retry once only (fail fast to prevent system overload):
+restart: on-failure:1
+
+# Limited retries (restarts up to 3 times on failure):
+restart: on-failure:3
+
+# Production (always restart unless manually stopped):
+restart: unless-stopped
+```
+
+⚠️ **WARNING**: Using `restart: unless-stopped` or `restart: always` with memory leaks can create infinite crash-restart loops! 
+
+**Best Practice**: Use `restart: on-failure:1` to retry once then fail fast. This prevents restart loops while allowing recovery from transient failures. If the container keeps failing, investigate the root cause instead of masking it with infinite restarts.
 
 **Resource Limits:**
 ```yaml
@@ -297,6 +352,12 @@ logging:
 - Check for OOM: `docker inspect <your-worker-container-name> | grep OOMKilled`
 - Review logs: `docker compose logs worker --tail=100`
 - Check kernel logs: `dmesg | grep -i "oom" | tail -20`
+
+**Container in restart loop:**
+- Check restart count: `docker inspect <your-worker-container-name> --format='{{.RestartCount}}'`
+- Set restart policy to "no": Change `restart: "no"` in docker-compose.yml
+- Stop the loop: `docker compose down`
+- Fix the underlying issue before restarting
 
 ---
 
