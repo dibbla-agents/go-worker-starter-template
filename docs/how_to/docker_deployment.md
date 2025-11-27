@@ -1,12 +1,149 @@
-# Docker Deployment Guide
+# Build and Run Worker
 
-Deploy your worker using Docker and Docker Compose with proper SDK configuration.
+## Prerequisites: Navigate to the worker directory
 
-## Prerequisites
+```bash
+cd /path/to/your/worker
+```
 
-- Docker 20.10+ and Docker Compose v2.0+
-- Go SDK repository cloned (see below)
-- `.env` file with required environment variables
+## Commands:
+
+### 1. Build the image using docker-compose
+
+```bash
+docker compose build --no-cache worker
+```
+
+### 2. Stop and remove old container
+
+```bash
+docker compose down worker
+```
+
+### 3. Run the updated container with enforced resource limits
+
+```bash
+docker compose --compatibility up worker -d
+```
+
+⚠️ **IMPORTANT**: The `--compatibility` flag ensures memory/CPU limits are enforced!  
+Without it, the 512M memory limit in docker-compose.yml is ignored and memory leaks can affect other services.
+
+### 4. Verify resource limits are active (CRITICAL SAFETY CHECK)
+
+```bash
+# Check if memory limit is enforced (should show 536870912 = 512MB)
+docker inspect <your-worker-container-name> --format='Memory Limit: {{.HostConfig.Memory}} bytes'
+
+# If it shows 0, limits are NOT enforced - STOP and redeploy with --compatibility flag!
+```
+
+### 5. Monitor memory usage (recommended for first 5-10 minutes after deployment)
+
+```bash
+# Real-time memory monitoring
+docker stats <your-worker-container-name> --no-stream
+
+# Or continuous monitoring:
+watch -n 2 'docker stats <your-worker-container-name> --no-stream'
+```
+
+Expected behavior:
+- Memory should stay under 450MB (GOMEMLIMIT triggers GC)
+- If it reaches 512MB, container will be killed by OOM (protecting other services)
+
+### 6. View logs (real-time)
+
+```bash
+docker compose logs worker -f
+```
+
+Or with limit:
+
+```bash
+docker compose logs --tail=50 worker
+```
+
+### 7. Check status
+
+```bash
+docker ps --filter "name=<your-worker-container-name>"
+```
+
+---
+
+## Emergency Procedures
+
+### Quick stop (if memory leak detected)
+
+```bash
+# Immediate kill
+docker kill <your-worker-container-name>
+
+# Full cleanup
+docker compose down --timeout 5
+```
+
+### Check for OOM kills
+
+```bash
+# Check if container was killed due to out of memory
+docker inspect <your-worker-container-name> | grep OOMKilled
+
+# View kernel OOM logs
+dmesg | grep -i "oom" | tail -20
+```
+
+---
+
+## Safe Deployment Best Practices
+
+### Pre-deployment checklist
+- [ ] Create backup image (see below)
+- [ ] Ensure you have terminal access with emergency stop command ready
+- [ ] Deploy during low-traffic period with team on standby
+- [ ] Have monitoring dashboard open
+
+### During deployment (first 10 minutes)
+- [ ] Monitor memory usage continuously: `watch -n 2 'docker stats <your-worker-container-name> --no-stream'`
+- [ ] Watch logs for errors: `docker compose logs worker -f`
+- [ ] Memory should stay under 450MB
+- [ ] If memory grows continuously or approaches 512MB, execute emergency stop
+
+### Post-deployment (first hour)
+- [ ] Check memory is stable
+- [ ] Verify worker is processing requests
+- [ ] Check no OOM kills occurred
+
+---
+
+## Rollback to Previous Version
+
+### Before deploying: Create a backup
+
+```bash
+# Tag current running image as backup
+docker tag worker:latest worker:backup-$(date +%Y%m%d-%H%M)
+```
+
+### To rollback:
+
+```bash
+# 1. List available backups
+docker images | grep "worker"
+
+# 2. Stop current container
+docker compose down worker
+
+# 3. Tag backup as latest
+docker tag worker:backup-YYYYMMDD-HHMM worker:latest
+
+# 4. Restart with backup image (with --compatibility for enforced limits)
+docker compose --compatibility up worker -d
+
+# 5. Verify limits are active after rollback
+docker inspect <your-worker-container-name> --format='Memory Limit: {{.HostConfig.Memory}} bytes'
+```
 
 ---
 
@@ -17,14 +154,15 @@ Deploy your worker using Docker and Docker Compose with proper SDK configuration
 ### 1. Clone the SDK
 
 ```bash
-git clone https://github.com/your-org/sdk-go.git
+git clone https://github.com/FatsharkStudiosAB/codex.git
 ```
 
 Recommended structure:
 ```
 /your-projects/
   ├── sdk-go/
-  └── worker_starter_template/
+  ├── jobs-sdk-go/
+  └── codex/automations/your-worker/
 ```
 
 ### 2. Update go.mod
@@ -32,8 +170,9 @@ Recommended structure:
 Add replace directives with your local SDK paths:
 
 ```go
-replace github.com/your-org/sdk-go/sdk => /absolute/path/to/sdk-go/sdk
-replace github.com/your-org/sdk-go/internal => /absolute/path/to/sdk-go/internal
+replace github.com/FatsharkStudiosAB/codex/workflows/workers/go/sdk => /absolute/path/to/sdk-go/sdk
+replace github.com/FatsharkStudiosAB/codex/workflows/workers/go/internal => /absolute/path/to/sdk-go/internal
+replace github.com/dibbla-agents/jobs-sdk-go => /absolute/path/to/jobs-sdk-go
 ```
 
 ### 3. Update Dockerfile.worker
@@ -44,45 +183,19 @@ Edit these sections in `Dockerfile.worker`:
 # Update COPY paths to match your SDK location
 COPY sdk-go/sdk ./sdk-go/sdk
 COPY sdk-go/internal ./sdk-go/internal
+COPY jobs-sdk-go ./jobs-sdk-go
 
 # Update sed commands to match your local paths
-RUN sed -i 's|/your/local/path/sdk-go/sdk|../sdk-go/sdk|g' go.mod && \
-    sed -i 's|/your/local/path/sdk-go/internal|../sdk-go/internal|g' go.mod
+RUN sed -i 's|/absolute/path/to/sdk-go/sdk|../sdk-go/sdk|g' go.mod && \
+    sed -i 's|/absolute/path/to/sdk-go/internal|../sdk-go/internal|g' go.mod && \
+    sed -i 's|/absolute/path/to/jobs-sdk-go|../jobs-sdk-go|g' go.mod
 ```
 
 ### 4. Build from Parent Directory
 
 ```bash
 cd /your-projects  # Parent directory containing both sdk-go and worker
-docker build -f worker_starter_template/Dockerfile.worker -t worker:latest .
-```
-
----
-
-## Quick Start
-
-### 1. Create .env file
-
-```env
-GRPC_SERVER_ADDRESS=your-grpc-server:50051
-LOG_LEVEL=info
-# Add other required variables
-```
-
-### 2. Build and Run
-
-```bash
-# Build
-docker-compose build
-
-# Start
-docker-compose up -d
-
-# View logs
-docker-compose logs -f worker
-
-# Stop
-docker-compose down
+docker build -f codex/automations/your-worker/Dockerfile.worker -t worker:latest .
 ```
 
 ---
@@ -91,12 +204,14 @@ docker-compose down
 
 ### Environment Variables
 
-Edit `.env` file or add to `docker-compose.yml`:
+Required variables in `.env` file:
 
-```yaml
-environment:
-  - LOG_LEVEL=debug
-  - WORKER_CONCURRENCY=5
+```env
+SERVER_NAME=your-worker-name
+GRPC_SERVER_ADDRESS=localhost:50051
+SERVER_API_TOKEN=your-api-token
+LOG_LEVEL=info
+GOMEMLIMIT=450MiB
 ```
 
 ### Volumes
@@ -128,28 +243,6 @@ networks:
 
 ---
 
-## Common Commands
-
-```bash
-# Start
-docker-compose up -d
-
-# Stop
-docker-compose down
-
-# Restart
-docker-compose restart worker
-
-# Logs
-docker-compose logs -f worker
-docker-compose logs --tail=100 worker
-
-# Status
-docker-compose ps
-```
-
----
-
 ## Production Tips
 
 **Resource Limits:**
@@ -158,7 +251,10 @@ deploy:
   resources:
     limits:
       cpus: '2.0'
-      memory: 2G
+      memory: 512M  # CRITICAL: Must use --compatibility flag to enforce
+    reservations:
+      cpus: '0.5'
+      memory: 128M
 ```
 
 **Logging:**
@@ -174,35 +270,7 @@ logging:
 - Never commit `.env` files with secrets
 - Use specific image tags (not `latest`)
 - The multi-stage Dockerfile keeps images small (~10MB vs ~400MB)
-
----
-
-## Example: Multi-Service Setup
-
-Worker with nginx server sharing a volume:
-
-```yaml
-services:
-  worker:
-    volumes:
-      - shared-files:/app/files
-    networks:
-      - app-network
-
-  webserver:
-    image: nginx:alpine
-    ports:
-      - "8081:80"
-    volumes:
-      - shared-files:/usr/share/nginx/html/files:ro
-    depends_on:
-      - worker
-    networks:
-      - app-network
-
-volumes:
-  shared-files:
-```
+- Always enforce memory limits to prevent resource exhaustion
 
 ---
 
@@ -213,12 +281,22 @@ volumes:
 - Verify build context includes both SDK and worker
 
 **Container exits immediately:**
-- Check logs: `docker-compose logs worker`
+- Check logs: `docker compose logs worker`
 - Verify `.env` has required variables
+- Check for OOM kills: `docker inspect <your-worker-container-name> | grep OOMKilled`
 
 **Cannot connect to services:**
 - Check environment variables
 - Ensure services are on same network
+
+**Memory limits not enforced (shows 0):**
+- Must use `docker compose --compatibility up` flag
+- Verify with: `docker inspect <your-worker-container-name> --format='Memory Limit: {{.HostConfig.Memory}} bytes'`
+
+**Container killed unexpectedly:**
+- Check for OOM: `docker inspect <your-worker-container-name> | grep OOMKilled`
+- Review logs: `docker compose logs worker --tail=100`
+- Check kernel logs: `dmesg | grep -i "oom" | tail -20`
 
 ---
 
