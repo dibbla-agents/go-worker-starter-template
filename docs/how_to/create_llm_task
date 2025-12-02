@@ -1,0 +1,274 @@
+# LLM API Task Integration Guide
+
+## Overview
+
+This guide explains how to create worker tasks that integrate with LLM endpoints at `codexdev.i.fatshark.se`. These endpoints process structured data and return AI-generated decisions.
+
+## Endpoint Pattern
+
+```
+http://codexdev.i.fatshark.se:80/api/execute/{endpoint_name}/prod
+```
+
+Replace `{endpoint_name}` with your specific function (e.g., `ct_faq_dedup`).
+
+## Basic Flow
+
+1. **Format Input** → Convert data to YAML (for LLM consumption)
+2. **POST Request** → Send to endpoint with Bearer token auth
+3. **Parse Response** → Extract decision from unstructured LLM text
+4. **Store Data** → Save parsed results to GORM database tables
+5. **Execute Logic** → Use the decision in your worker
+
+## Why YAML for Input?
+
+**YAML is usually used for INPUT to the LLM**. It provides:
+
+- **Token efficient**: Fewer tokens than JSON (no quotes, minimal syntax)
+- **LLM-friendly**: Clear structure the AI can understand
+- **Human-readable**: Easy to debug and log
+
+**Example input:**
+```yaml
+new_item:
+  question: "How do I reset my password?"
+  response: "Navigate to settings..."
+
+similar_in_production:
+  - question: "Password reset steps?"
+    response: "Go to settings..."
+    similarity_distance: 0.15
+```
+
+**The LLM response will be unstructured text** that you parse and store in your GORM tables, or other post processing you need to your case.
+
+## Request Structure
+
+Wrap your YAML in a JSON request:
+
+```go
+type APIRequest struct {
+    Input string `json:"input"`
+}
+
+yamlInput := "new_item:\n  question: '...'"
+request := APIRequest{Input: yamlInput}
+requestBody, _ := json.Marshal(request)
+```
+
+## Making the Request
+
+```go
+func callLLMAPI(yamlInput, endpointName string) (*Decision, error) {
+    // Get token
+    apiToken := os.Getenv("SERVER_API_TOKEN")
+    if apiToken == "" {
+        return nil, fmt.Errorf("SERVER_API_TOKEN not set")
+    }
+    
+    // Prepare request
+    request := APIRequest{Input: yamlInput}
+    body, _ := json.Marshal(request)
+    
+    // Create HTTP request
+    url := fmt.Sprintf("http://codexdev.i.fatshark.se:80/api/execute/%s/prod", endpointName)
+    req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("Authorization", "Bearer "+apiToken)
+    
+    // Execute
+    client := &http.Client{Timeout: 30 * time.Second}
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+    
+    // Parse response
+    bodyBytes, _ := io.ReadAll(resp.Body)
+    var apiResponse APIResponse
+    json.Unmarshal(bodyBytes, &apiResponse)
+    
+    return parseDecision(apiResponse.Response)
+}
+```
+
+## Response Structure
+
+The API returns a JSON wrapper, but **the LLM's actual response is unstructured text**:
+
+```go
+type APIResponse struct {
+    Response string `json:"response"` // LLM output (unstructured text)
+}
+```
+
+You'll need to parse this text to extract the data you want to store in your GORM database tables.
+
+## Parsing LLM Output (Multi-Strategy)
+
+**LLM responses are unstructured text** - the AI might include explanations, formatting, or vary its output structure. Use multiple parsing strategies to extract the data you need:
+
+```go
+func parseDecision(response string) (*Decision, error) {
+    // Strategy 1: YAML code block
+    codeBlockRegex := regexp.MustCompile("(?s)```(?:yaml|yml)?\n(.*?)\n```")
+    if matches := codeBlockRegex.FindStringSubmatch(response); len(matches) > 1 {
+        var decision Decision
+        if yaml.Unmarshal([]byte(matches[1]), &decision) == nil {
+            return &decision, nil
+        }
+    }
+    
+    // Strategy 2: Raw YAML
+    var decision Decision
+    if yaml.Unmarshal([]byte(response), &decision) == nil {
+        return &decision, nil
+    }
+    
+    // Strategy 3: Regex fallback
+    approvedRegex := regexp.MustCompile(`(?i)approved:\s*(true|false)`)
+    if matches := approvedRegex.FindStringSubmatch(response); len(matches) > 1 {
+        return &Decision{
+            Approved:  strings.ToLower(matches[1]) == "true",
+            Reasoning: "Parsed via regex",
+        }, nil
+    }
+    
+    return nil, fmt.Errorf("failed to parse LLM response")
+}
+```
+
+## Data Structures
+
+```go
+// Your input (converts to YAML for the LLM)
+type TaskInput struct {
+    NewItem      ItemData   `yaml:"new_item"`
+    ExistingData []ItemData `yaml:"existing_data"`
+}
+
+type ItemData struct {
+    Question string  `yaml:"question"`
+    Answer   string  `yaml:"answer"`
+    Score    float32 `yaml:"similarity_distance,omitempty"`
+}
+
+// What you extract from LLM's unstructured response
+// Use yaml tags for parsing IF the LLM happens to return YAML,
+// but be prepared to parse plain text with regex
+type Decision struct {
+    Approved  bool     `yaml:"approved"`
+    Reasoning string   `yaml:"reasoning"`
+    Matches   []string `yaml:"matches,omitempty"`
+}
+```
+
+**After parsing, you typically store the extracted data in your GORM database tables.**
+
+## Formatting Input as YAML
+
+This prepares clean, structured data to send TO the LLM:
+
+```go
+func formatInputAsYAML(newItem ItemData, existing []ItemData) (string, error) {
+    input := TaskInput{
+        NewItem:      newItem,
+        ExistingData: existing,
+    }
+    
+    yamlBytes, err := yaml.Marshal(input)
+    if err != nil {
+        return "", fmt.Errorf("failed to marshal YAML: %w", err)
+    }
+    
+    return string(yamlBytes), nil
+}
+```
+
+The response FROM the LLM will probably be unstructured - parse it and store results in your database.
+
+## YAML Input Best Practices
+
+When formatting data to send to the LLM:
+
+1. **Clear top-level keys**: `new_item`, `context`, `similar_items`
+2. **Include metadata**: Similarity scores, timestamps, relevance data
+3. **Keep it flat**: Avoid deep nesting
+4. **Consistent naming**: Use `snake_case` throughout
+5. **Omit empty fields**: Use `omitempty` tag in structs
+
+Remember: This is only for INPUT. The LLM's response will be unstructured text that you parse.
+
+## Error Handling
+
+```go
+// Check status code
+if resp.StatusCode != http.StatusOK {
+    return fmt.Errorf("API returned status %d", resp.StatusCode)
+}
+
+// Log raw response for debugging
+log.Printf("Raw LLM response: %s", response)
+
+// Handle empty responses
+if strings.TrimSpace(response) == "" {
+    return fmt.Errorf("empty LLM response")
+}
+```
+
+## Implementation Checklist
+
+- [ ] Define input/output Go structs with YAML tags
+- [ ] Create YAML formatting function
+- [ ] Implement HTTP request with Bearer auth
+- [ ] Add 30-second timeout to HTTP client
+- [ ] Parse JSON wrapper response
+- [ ] Implement 3-strategy response parsing
+- [ ] Log raw YAML input and API response
+- [ ] Handle authentication and network errors
+- [ ] Test with various response formats
+
+## Common Pitfalls
+
+1. **No timeout on HTTP client** → Can hang indefinitely
+2. **Single parsing strategy** → LLMs vary output format
+3. **Missing raw response logs** → Impossible to debug parsing failures
+4. **Not checking SERVER_API_TOKEN** → Silent auth failures
+5. **Deep YAML nesting** → Confuses LLMs and wastes tokens
+
+## Quick Reference
+
+**Authentication:**
+```go
+apiToken := os.Getenv("SERVER_API_TOKEN")
+req.Header.Set("Authorization", "Bearer "+apiToken)
+```
+
+**Request format:**
+```json
+{"input": "your_yaml_string_here"}
+```
+
+**Response format:**
+```json
+{"response": "llm_output_yaml_here"}
+```
+
+**What you're trying to extract from LLM output:**
+- A decision (e.g., approved: true/false)
+- Reasoning text
+- Any relevant data to store in your GORM tables
+
+The LLM might return this as YAML-like text, plain English, or mixed formats.
+
+## Example: Duplicate FAQ Check
+
+The `check_duplicate_faq.go` task demonstrates this pattern:
+1. **Formats input as YAML**: New FAQ + similar existing FAQs with similarity scores
+2. **Sends to LLM**: POSTs to `ct_faq_dedup` endpoint
+3. **Parses response**: Extracts approval decision from unstructured LLM text
+4. **Database action**: If duplicate detected, deletes the item from GORM table
+5. **Returns result**: Error with reasoning if rejected, success if approved
+
+**Key insight**: YAML is for sending clean input to the LLM. The response gets parsed and stored in your database tables.
