@@ -215,4 +215,3 @@ func (j *ComplexJob) process() (int, error) {
 ## Example Reference
 
 See `internal/jobs/tasks/example_task.go` for a complete working example.
-
