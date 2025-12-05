@@ -65,15 +65,17 @@ worker_starter_template/
 
 ## Setup
 
-### 1. Customize Your Project
+```markdown
+### 1. Verify Module Name
 
-After creating from the template, update the module name in `go.mod`:
+Open your `go.mod` file and check the first line.
 
-```go
-module github.com/YOUR_USERNAME/YOUR_PROJECT_NAME
-
-go 1.23
-```
+*   ✅ **If you used `gonew`:** It should already match your project (e.g., `module github.com/your-org/your-project`). **Skip to Step 2.**
+*   📝 **If you used `git clone`:** You must manually update it now:
+    ```go
+    // Change this line to your new repository path
+    module github.com/YOUR_USERNAME/YOUR_PROJECT_NAME
+    ```
 
 **If you use an external SDK:**
 
