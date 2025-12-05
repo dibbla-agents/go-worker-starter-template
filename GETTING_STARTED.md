@@ -65,7 +65,7 @@ worker_starter_template/
 
 ## Setup
 
-```markdown
+
 ### 1. Verify Module Name
 
 Open your `go.mod` file and check the first line.
