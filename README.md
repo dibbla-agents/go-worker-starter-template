@@ -21,7 +21,28 @@ A production-ready Go template for building worker systems with gRPC, job orches
 
 ## 🎯 Quick Start
 
-### Option 1: Standalone Project (Recommended)
+### Option 1: CLI (Recommended) 🚀
+The fastest way to start. Automatically downloads the template and **renames all imports** to match your new project name.
+
+1. **Install the tool:**
+   ```bash
+   go install golang.org/x/tools/cmd/gonew@latest
+Create your project:
+
+```bash
+# Syntax: gonew <template-url> <your-new-module-url>
+gonew github.com/dibbla-agents/go-worker-starter-template@latest github.com/your-org/your-project-name
+```
+Initialize Git:
+The CLI creates the files but doesn't set up Git.
+
+```bash
+cd your-project-name
+git init
+git add .
+git commit -m "Initial commit"
+```
+### Option 2: Standalone Project 
 
 1. **Use this template** - Click "Use this template" button on GitHub
 2. **Clone your new repository**
@@ -31,7 +52,7 @@ A production-ready Go template for building worker systems with gRPC, job orches
    ```
 3. **Follow the setup guide** - See [GETTING_STARTED.md](GETTING_STARTED.md)
 
-### Option 2: Add to Existing Repo (Monorepo)
+### Option 3: Add to Existing Repo (Monorepo)
 
 To add this template inside an existing repository (e.g., `codex/automations/my-worker/`):
 
