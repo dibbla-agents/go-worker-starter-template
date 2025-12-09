@@ -11,7 +11,116 @@ Jobs orchestrate multi-step workflows with error handling, logging, and metrics.
 | **Pattern** | Stateless handler | Stateful workflow with phases |
 | **Location** | `internal/worker_functions/` | `internal/jobs/` |
 
-## Creating a Job
+---
+
+## Quick Start: Simple Job
+
+For most cases, start with the simple pattern:
+
+```go
+package jobs
+
+import (
+	"fmt"
+	"log"
+	"time"
+)
+
+type SimpleJob struct {
+	Name  string
+	Count int
+}
+
+type SimpleJobResult struct {
+	ItemsProcessed int
+	Success        bool
+	Error          error
+	Duration       time.Duration
+}
+
+func NewSimpleJob(name string, count int) *SimpleJob {
+	return &SimpleJob{Name: name, Count: count}
+}
+
+func (j *SimpleJob) Execute() *SimpleJobResult {
+	start := time.Now()
+	result := &SimpleJobResult{}
+
+	log.Printf("🚀 Starting job: %s", j.Name)
+
+	// Validate
+	if j.Count <= 0 {
+		result.Error = fmt.Errorf("count must be positive")
+		result.Duration = time.Since(start)
+		return result
+	}
+
+	// Process
+	for i := 0; i < j.Count; i++ {
+		// Your logic here
+		result.ItemsProcessed++
+	}
+
+	result.Success = true
+	result.Duration = time.Since(start)
+	log.Printf("✅ Job completed in %s", result.Duration)
+	return result
+}
+```
+
+See `internal/jobs/simple_job.go` for the complete example.
+
+---
+
+## Calling Jobs from Worker Functions
+
+The most common pattern is triggering a job from a worker function:
+
+```go
+package processbatch
+
+import (
+	"fmt"
+
+	sdk "github.com/dibbla-agents/sdk-go"
+	"github.com/dibbla-agents/go-worker-starter-template/internal/jobs"
+)
+
+type ProcessBatchInput struct {
+	BatchName string `json:"batch_name"`
+	ItemCount int    `json:"item_count"`
+}
+
+type ProcessBatchOutput struct {
+	Success        bool    `json:"success"`
+	ItemsProcessed int     `json:"items_processed"`
+	DurationMs     float64 `json:"duration_ms"`
+}
+
+func Register(server *sdk.Server) {
+	fn := sdk.NewSimpleFunction[ProcessBatchInput, ProcessBatchOutput](
+		"process_batch", "1.0.0", "Process a batch using a job",
+	).WithHandler(func(input ProcessBatchInput) (ProcessBatchOutput, error) {
+		// Create and execute the job
+		job := jobs.NewSimpleJob(input.BatchName, input.ItemCount)
+		result := job.Execute()
+
+		return ProcessBatchOutput{
+			Success:        result.Success,
+			ItemsProcessed: result.ItemsProcessed,
+			DurationMs:     float64(result.Duration.Milliseconds()),
+		}, nil
+	})
+
+	server.RegisterFunction(fn)
+}
+```
+
+See `internal/worker_functions/process_batch/` for the complete example.
+
+---
+
+## Creating a Job (Full Pattern)
 
 ### Step 1: Define Job in `internal/jobs/your_job.go`
 
@@ -22,7 +131,8 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"worker_starter_template/internal/state"
+
+	"github.com/dibbla-agents/go-worker-starter-template/internal/state"
 )
 
 // YourJob orchestrates a multi-step process
@@ -197,6 +307,8 @@ func (j *YourJob) process() (int, error) {
 
 ## Example References
 
-- **Job:** `internal/jobs/example_job.go`
-- **Task:** `internal/jobs/tasks/example_task.go`
+- **Simple Job:** `internal/jobs/simple_job.go` - Minimal job pattern
+- **Advanced Job:** `internal/jobs/example_job.go` - Full-featured job with phases
+- **Task:** `internal/jobs/tasks/example_task.go` - Reusable task component
+- **Worker → Job:** `internal/worker_functions/process_batch/` - Calling jobs from worker functions
 

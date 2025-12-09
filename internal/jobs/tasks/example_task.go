@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"worker_starter_template/internal/state"
+	"github.com/dibbla-agents/go-worker-starter-template/internal/state"
 )
 
 // ExampleTask demonstrates the task pattern.

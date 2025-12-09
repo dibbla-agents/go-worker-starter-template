@@ -15,15 +15,12 @@
 package state
 
 import (
-	"fmt"
-	"os"
-
 	// Uncomment if using GORM with PostgreSQL
 	// "gorm.io/driver/postgres"
 	// "gorm.io/gorm"
-	
+
 	// Uncomment if you have models to migrate
-	// "your-module/internal/models"
+	// "github.com/dibbla-agents/go-worker-starter-template/internal/models"
 )
 
 // AsyncGlobalState provides centralized state management for worker functions.

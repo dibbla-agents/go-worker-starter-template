@@ -3,8 +3,8 @@ package workerfunctions
 import (
 	"fmt"
 
-	"github.com/FatsharkStudiosAB/codex/workflows/workers/go/sdk"
-	"worker_starter_template/internal/state"
+	sdk "github.com/dibbla-agents/sdk-go"
+	"github.com/dibbla-agents/go-worker-starter-template/internal/state"
 )
 
 // WorkerFunction defines the interface that all worker functions must implement

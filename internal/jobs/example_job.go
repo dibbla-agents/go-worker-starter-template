@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"worker_starter_template/internal/jobs/tasks"
-	"worker_starter_template/internal/state"
+	"github.com/dibbla-agents/go-worker-starter-template/internal/jobs/tasks"
+	"github.com/dibbla-agents/go-worker-starter-template/internal/state"
 )
 
 // ExampleJob demonstrates the standard job pattern.

@@ -14,6 +14,7 @@ Step-by-step guides for common tasks:
 - [Create Jobs](how_to/create_jobs.md) - Build multi-step internal workflows
 - [Create Tasks](how_to/create_tasks.md) - Develop reusable task operations
 - [Create Database Tables](how_to/create_database_tables.md) - Set up database models and migrations
+- [Add Frontend](how_to/add_frontend.md) - Add optional Vite + React web UI
 
 ## Configuration
 
@@ -47,7 +48,7 @@ Step-by-step guides for common tasks:
 ## Project Structure
 
 ```
-worker_starter_template/
+your-project/
 ├── cmd/worker/              # Main application entry point
 ├── internal/
 │   ├── worker_functions/    # External API functions

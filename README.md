@@ -8,8 +8,7 @@ A production-ready Go template for building worker systems with gRPC, job orches
 - **Job Orchestration** - Multi-step workflows with state management
 - **Task System** - Reusable, composable operations
 - **Database Integration** - Optional PostgreSQL support with GORM
-- **Embedded Frontend** - Built-in web UI with Vite
-- **OpenAI Integration** - Ready-to-use embeddings client
+- **OpenAI Integration** - Ready-to-use embeddings client (optional)
 - **Docker Support** - Production-ready containerization
 - **Comprehensive Documentation** - Step-by-step guides for common tasks
 
@@ -81,7 +80,8 @@ git commit -m "Add my-worker from template"
 
 ## 📚 Documentation
 
-- **[Getting Started](GETTING_STARTED.md)** - Quick setup and first run
+- **[Quick Start](QUICKSTART.md)** - Get running in 5 minutes
+- **[Getting Started](GETTING_STARTED.md)** - Detailed setup guide
 - **[Documentation Index](docs/README.md)** - Complete guides and references
 - **[How-To Guides](docs/how_to/)** - Step-by-step tutorials for common tasks
 
@@ -104,17 +104,28 @@ git commit -m "Add my-worker from template"
 │   ├── models/              # Database models (GORM)
 │   ├── state/               # Global state management
 │   ├── config/              # Configuration management
-│   ├── embeddings/          # OpenAI embeddings client
-│   ├── external_api/        # External API integrations
-│   └── frontend/            # Embedded frontend assets
-├── frontend/                # Frontend development (Vite)
+│   └── embeddings/          # OpenAI embeddings client (optional)
 ├── docs/                    # Documentation
 └── docker-compose.yml       # Multi-container setup
 ```
 
 ## 🔧 Customization
 
-After creating your project from this template, you should:
+### Option A: Interactive Setup (Recommended)
+
+Run the setup wizard to customize your template:
+
+```bash
+go run ./cmd/setup
+```
+
+This will ask about:
+- Database support (PostgreSQL/GORM)
+- Frontend (Vite + React)
+- OpenAI embeddings client
+- Jobs/tasks system
+
+### Option B: Manual Setup
 
 1. **Update module name** in `go.mod` to match your project
 2. **Configure environment** - Copy `env.example` to `.env`

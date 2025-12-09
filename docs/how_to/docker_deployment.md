@@ -165,28 +165,23 @@ docker inspect <your-worker-container-name> --format='Memory Limit: {{.HostConfi
 
 **The worker requires the Go SDK**. Without it, Docker builds will fail.
 
-### 1. Clone the SDK
+### 1. Add SDK Dependency
+
+The SDK is available via Go modules:
 
 ```bash
-git clone https://github.com/FatsharkStudiosAB/codex.git
+go get github.com/dibbla-agents/sdk-go@latest
 ```
 
-Recommended structure:
-```
-/your-projects/
-  ├── sdk-go/
-  ├── jobs-sdk-go/
-  └── codex/automations/your-worker/
-```
+### 2. Verify go.mod
 
-### 2. Update go.mod
-
-Add replace directives with your local SDK paths:
+Your `go.mod` should include:
 
 ```go
-replace github.com/FatsharkStudiosAB/codex/workflows/workers/go/sdk => /absolute/path/to/sdk-go/sdk
-replace github.com/FatsharkStudiosAB/codex/workflows/workers/go/internal => /absolute/path/to/sdk-go/internal
-replace github.com/dibbla-agents/jobs-sdk-go => /absolute/path/to/jobs-sdk-go
+require (
+	github.com/dibbla-agents/sdk-go v0.0.0
+	github.com/joho/godotenv v1.5.1
+)
 ```
 
 ### 3. Update Dockerfile.worker

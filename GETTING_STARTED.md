@@ -7,7 +7,6 @@ Quick guide to set up and run this worker template.
 ## Prerequisites
 
 - Go 1.23+
-- Go SDK repository cloned (required)
 - PostgreSQL (optional, for database features)
 
 ---
@@ -15,16 +14,12 @@ Quick guide to set up and run this worker template.
 ## Project Structure
 
 ```
-worker_starter_template/
+your-project/
 ├── cmd/
 │   └── worker/              # Application entry point (main.go)
 ├── internal/
 │   ├── config/              # Configuration management
-│   ├── embeddings/          # OpenAI embeddings client
-│   ├── external_api/        # External API integrations
-│   ├── frontend/            # Embedded frontend (Go embed)
-│   │   ├── dist/            # Built frontend assets
-│   │   └── embed.go         # Go embed configuration
+│   ├── embeddings/          # OpenAI embeddings client (optional)
 │   ├── jobs/                # Job definitions (multi-step workflows)
 │   │   └── tasks/           # Reusable task definitions
 │   ├── models/              # Database models (GORM)
@@ -32,15 +27,6 @@ worker_starter_template/
 │   └── worker_functions/    # Your worker function implementations
 │       ├── example_function/
 │       └── registry.go      # Function registration
-├── frontend/                # Frontend development project
-│   ├── src/
-│   │   ├── components/      # UI components
-│   │   ├── pages/           # Page views
-│   │   ├── assets/          # Static assets
-│   │   └── ...
-│   ├── index.html           # HTML entry point
-│   ├── vite.config.js       # Vite configuration
-│   └── dist/                # Build output (copied to internal/frontend/dist)
 ├── docs/                    # Documentation and guides
 ├── docker-compose.yml       # Docker Compose configuration
 ├── Dockerfile.worker        # Worker Docker image
@@ -53,8 +39,6 @@ worker_starter_template/
 - **`internal/worker_functions/`** - Add your custom worker functions here
 - **`internal/jobs/`** - Define multi-step workflows
 - **`internal/models/`** - Database models (if using PostgreSQL)
-- **`frontend/`** - Frontend development project (Vite + components + pages)
-- **`internal/frontend/`** - Embedded frontend build (served by Go worker)
 - **`docs/how_to/`** - Detailed guides for common tasks
 
 **Key Files:**
@@ -77,32 +61,30 @@ Open your `go.mod` file and check the first line.
     module github.com/YOUR_USERNAME/YOUR_PROJECT_NAME
     ```
 
-**If you use an external SDK:**
-
-Clone your SDK and add replace directives in `go.mod`:
-
-```bash
-git clone https://github.com/your-org/your-sdk.git
-```
-
-In `go.mod`:
-```go
-replace github.com/your-org/your-sdk/pkg => /path/to/your-sdk/pkg
-```
-
 ### 2. Build and Run
 
-**This is a Go project** - download dependencies and build before running:
-
+**Linux/Mac:**
 ```bash
-# Download dependencies (required)
+# Download dependencies
 go mod download
 
-# Build the binary (required)
+# Build the binary
 go build -o worker ./cmd/worker
 
 # Run
 ./worker
+```
+
+**Windows (PowerShell):**
+```powershell
+# Download dependencies
+go mod download
+
+# Build the binary
+go build -o worker.exe .\cmd\worker
+
+# Run
+.\worker.exe
 ```
 
 ### 3. Optional: Configure Environment
@@ -143,8 +125,15 @@ Key common environment variables:
    ```
 
 4. **Rebuild and run:**
+   
+   **Linux/Mac:**
    ```bash
    go build -o worker ./cmd/worker && ./worker
+   ```
+   
+   **Windows (PowerShell):**
+   ```powershell
+   go build -o worker.exe .\cmd\worker; .\worker.exe
    ```
 
 ---
@@ -160,11 +149,25 @@ Key common environment variables:
 
 ## Common Commands
 
+**Linux/Mac:**
 ```bash
 # Build and run
 go mod download
 go build -o worker ./cmd/worker
 ./worker
+
+# Development
+go fmt ./...        # Format code
+go test ./...       # Run tests
+go vet ./...        # Check for issues
+```
+
+**Windows (PowerShell):**
+```powershell
+# Build and run
+go mod download
+go build -o worker.exe .\cmd\worker
+.\worker.exe
 
 # Development
 go fmt ./...        # Format code

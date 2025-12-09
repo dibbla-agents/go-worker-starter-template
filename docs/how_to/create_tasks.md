@@ -24,7 +24,8 @@ package tasks
 
 import (
 	"fmt"
-	"worker_starter_template/internal/state"
+
+	"github.com/dibbla-agents/go-worker-starter-template/internal/state"
 )
 
 // FetchDataTask fetches and processes data from database or API
@@ -122,8 +123,8 @@ func NewFetchDataTaskWithFilter(ags *state.AsyncGlobalState, limit int, filter s
 package jobs
 
 import (
-	"worker_starter_template/internal/jobs/tasks"
-	"worker_starter_template/internal/state"
+	"github.com/dibbla-agents/go-worker-starter-template/internal/jobs/tasks"
+	"github.com/dibbla-agents/go-worker-starter-template/internal/state"
 )
 
 func (j *YourJob) process() (int, error) {

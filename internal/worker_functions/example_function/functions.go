@@ -1,19 +1,26 @@
-// Package examplefunction provides a template for creating worker functions.
+// Package examplefunction provides an ADVANCED template for worker functions.
 //
-// To create your own function:
+// This example demonstrates:
+// - Registry pattern for function management
+// - AsyncGlobalState for shared resources (database, cache, etc.)
+// - Structured function metadata (name, version, tags)
+//
+// For a SIMPLE example, see: internal/worker_functions/greeting/greeting.go
+//
+// To create your own advanced function:
 // 1. Copy this folder and rename it
 // 2. Update package name to match folder
 // 3. Customize Input/Output structs
 // 4. Implement your logic in handler()
-// 5. Import and register in cmd/worker/main.go
+// 5. Register with the registry in cmd/worker/main.go
 package examplefunction
 
 import (
 	"fmt"
 	"log"
 
-	"github.com/FatsharkStudiosAB/codex/workflows/workers/go/sdk"
-	"worker_starter_template/internal/state"
+	sdk "github.com/dibbla-agents/sdk-go"
+	"github.com/dibbla-agents/go-worker-starter-template/internal/state"
 )
 
 // Input defines what the function receives
