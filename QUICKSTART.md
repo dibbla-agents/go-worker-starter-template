@@ -20,7 +20,16 @@ cd my-worker
 
 ## Step 2: Configure Environment
 
-Create a `.env` file:
+Copy the example environment file and add your API token:
+
+```bash
+# Copy the template (preserves correct file encoding)
+cp env.example .env
+
+# Edit .env and replace 'your_api_token_here' with your actual token
+```
+
+Your `.env` file should contain:
 
 ```env
 SERVER_API_TOKEN=ak_your_token_here
@@ -153,7 +162,8 @@ my-worker/
 
 | Error | Solution |
 |-------|----------|
-| `SERVER_API_TOKEN environment variable is required` | Create `.env` file with your token |
+| `SERVER_API_TOKEN environment variable is required` | Create `.env` file with your token (use `cp env.example .env`) |
+| `unexpected character in variable name` | Your `.env` file has encoding issues. Delete it and run `cp env.example .env` again |
 | `invalid or expired API token` | Generate new token from dashboard |
 | `cannot find module` | Run `go mod tidy` |
 | Port 8080 already in use | Stop the other worker first, or check Task Manager for `worker.exe` |

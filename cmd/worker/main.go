@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"log"
 	"net/http"
 	"os"
@@ -24,11 +25,34 @@ import (
 	// workerfunctions "github.com/dibbla-agents/go-worker-starter-template/internal/worker_functions"
 )
 
+// loadEnvFile loads environment variables from .env file, handling Windows UTF-8 BOM
+func loadEnvFile() error {
+	content, err := os.ReadFile(".env")
+	if err != nil {
+		return err
+	}
+
+	// Strip UTF-8 BOM if present (common on Windows)
+	content = bytes.TrimPrefix(content, []byte{0xEF, 0xBB, 0xBF})
+
+	// Parse the content
+	envMap, err := godotenv.Unmarshal(string(content))
+	if err != nil {
+		return err
+	}
+
+	// Set environment variables
+	for k, v := range envMap {
+		os.Setenv(k, v)
+	}
+	return nil
+}
+
 func main() {
 	log.Println("🚀 Starting Worker...")
 
 	// Load environment variables from .env file
-	if err := godotenv.Load(); err != nil {
+	if err := loadEnvFile(); err != nil {
 		log.Println("⚠️  Warning: .env file not found, using system environment variables")
 	}
 
