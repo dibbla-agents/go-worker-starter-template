@@ -43,6 +43,17 @@ func main() {
 		log.Fatal("❌ SERVER_API_TOKEN environment variable is required")
 	}
 
+	// HTTP server config (localhost only by default - no firewall prompt)
+	httpHost := os.Getenv("HTTP_HOST")
+	if httpHost == "" {
+		httpHost = "127.0.0.1"
+	}
+	httpPort := os.Getenv("HTTP_PORT")
+	if httpPort == "" {
+		httpPort = "8080"
+	}
+	httpAddr := httpHost + ":" + httpPort
+
 	// Create SDK server
 	log.Println("🔧 Creating SDK server...")
 	server, err := sdk.New(
@@ -76,8 +87,8 @@ func main() {
 	log.Println("   ✅ HTTP: POST /api/greeting")
 
 	go func() {
-		log.Println("🌐 Starting HTTP server on :8080")
-		if err := http.ListenAndServe(":8080", router.Handler()); err != nil {
+		log.Printf("🌐 Starting HTTP server on %s", httpAddr)
+		if err := http.ListenAndServe(httpAddr, router.Handler()); err != nil {
 			log.Printf("HTTP server error: %v", err)
 		}
 	}()

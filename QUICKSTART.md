@@ -29,6 +29,8 @@ SERVER_NAME=my-worker
 
 > Get your token from [app.dibbla.com/dashboard](https://app.dibbla.com/dashboard) → Settings → API Keys
 
+> **Docker users:** Add `HTTP_HOST=0.0.0.0` to your `.env` file.
+
 ## Step 3: Run the Worker
 
 ```bash
