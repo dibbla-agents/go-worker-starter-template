@@ -82,10 +82,12 @@ The template includes a `greeting` function out of the box.
 Open a **second terminal** (keep the worker running in the first):
 
 ```bash
-cd frontend
+cd my-worker/frontend
 npm install
 npm run dev
 ```
+
+> **Note:** If you're already inside `my-worker/`, just use `cd frontend`.
 
 Open **http://localhost:5173** and test the greeting function directly.
 
