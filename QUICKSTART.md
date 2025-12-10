@@ -15,8 +15,15 @@ go install golang.org/x/tools/cmd/gonew@latest
 
 # Create your project
 gonew github.com/dibbla-agents/go-worker-starter-template@latest github.com/your-org/my-worker
+```
+
+**⚠️ Important:** Enter the project directory before continuing:
+
+```bash
 cd my-worker
 ```
+
+> All remaining commands must be run from inside the `my-worker` directory.
 
 ## Step 2: Configure Environment
 
@@ -162,6 +169,7 @@ my-worker/
 
 | Error | Solution |
 |-------|----------|
+| `go.mod file not found in current directory` | You're in the wrong directory. Run `cd my-worker` first |
 | `SERVER_API_TOKEN environment variable is required` | Create `.env` file with your token (use `cp env.example .env`) |
 | `unexpected character in variable name` | Your `.env` file has encoding issues. Delete it and run `cp env.example .env` again |
 | `invalid or expired API token` | Generate new token from dashboard |
