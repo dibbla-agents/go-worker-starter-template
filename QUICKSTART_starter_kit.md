@@ -29,21 +29,20 @@ SERVER_NAME=my-worker
 
 > Get your token from [app.dibbla.com/dashboard](https://app.dibbla.com/dashboard) → Settings → API Keys
 
-## Step 3: Build and Run
+## Step 3: Run the Worker
 
-**Windows (PowerShell):**
-```powershell
-go mod tidy
-go build -o worker.exe .\cmd\worker
-.\worker.exe
-```
-
-**Linux / Mac:**
 ```bash
 go mod tidy
-go build -o worker ./cmd/worker
-./worker
+go run ./cmd/worker
 ```
+
+> This works on **Windows, Mac, and Linux** - no platform-specific commands needed.
+
+### Stopping the Worker
+
+Press **`Ctrl + C`** in the terminal to stop the worker gracefully.
+
+> **Tip:** Always run the worker in the **foreground** (not background). If you accidentally lose control of a Go process, use Task Manager (Windows) or `pkill worker` (Mac/Linux) to stop it.
 
 ## Success!
 
@@ -64,7 +63,7 @@ The template includes a `greeting` function out of the box.
 
 ## Step 4: Test with Frontend (Optional)
 
-Open a **second terminal**:
+Open a **second terminal** (keep the worker running in the first):
 
 ```bash
 cd frontend
@@ -75,6 +74,8 @@ npm run dev
 Open **http://localhost:5173** and test the greeting function directly.
 
 > The frontend proxies `/api/*` to the worker on port 8080.
+
+To stop the frontend: Press **`Ctrl + C`** in the frontend terminal.
 
 ---
 
@@ -113,11 +114,16 @@ Register it in `cmd/worker/main.go`:
 ```go
 import "github.com/your-org/my-worker/internal/worker_functions/hello"
 
-// In main():
+// In main(), after other Register calls:
 hello.Register(server)
+log.Println("   ✅ Registered: hello")
 ```
 
-Rebuild and run!
+Stop the worker (`Ctrl + C`) and run again:
+
+```bash
+go run ./cmd/worker
+```
 
 ---
 
@@ -150,4 +156,14 @@ my-worker/
 | `SERVER_API_TOKEN environment variable is required` | Create `.env` file with your token |
 | `invalid or expired API token` | Generate new token from dashboard |
 | `cannot find module` | Run `go mod tidy` |
+| Worker won't stop with Ctrl+C | Use Task Manager (Windows) or `pkill -f "go run"` (Mac/Linux) |
+| Port 8080 already in use | Another worker is running - find and stop it first |
+
+---
+
+## Advanced: Registry Pattern
+
+The examples above use the **simple pattern** (one `Register()` function per file). This is recommended for most use cases.
+
+For advanced scenarios where functions need **shared state** (database connections, caches, etc.), see the registry pattern in `internal/worker_functions/registry.go`.
 
