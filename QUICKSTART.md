@@ -38,13 +38,11 @@ go mod tidy
 go run ./cmd/worker
 ```
 
-> This works on **Windows, Mac, and Linux** - no platform-specific commands needed.
-
 ### Stopping the Worker
 
-Press **`Ctrl + C`** in the terminal to stop the worker gracefully.
+Press **`Ctrl + C`** to stop the worker.
 
-> **Tip:** Always run the worker in the **foreground** (not background). If you accidentally lose control of a Go process, use Task Manager (Windows) or `pkill worker` (Mac/Linux) to stop it.
+> **Note:** Use a regular terminal (PowerShell, Terminal, CMD). Some IDE integrated terminals may not handle `Ctrl+C` properly.
 
 ## Success!
 
@@ -158,8 +156,7 @@ my-worker/
 | `SERVER_API_TOKEN environment variable is required` | Create `.env` file with your token |
 | `invalid or expired API token` | Generate new token from dashboard |
 | `cannot find module` | Run `go mod tidy` |
-| Worker won't stop with Ctrl+C | Use Task Manager (Windows) or `pkill -f "go run"` (Mac/Linux) |
-| Port 8080 already in use | Another worker is running - find and stop it first |
+| Port 8080 already in use | Stop the other worker first, or check Task Manager for `worker.exe` |
 
 ---
 
