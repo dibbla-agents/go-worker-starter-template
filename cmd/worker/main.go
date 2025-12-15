@@ -67,6 +67,16 @@ func main() {
 		log.Fatal("❌ SERVER_API_TOKEN environment variable is required")
 	}
 
+	// gRPC server config (for self-hosted servers)
+	grpcServerAddress := os.Getenv("GRPC_SERVER_ADDRESS")
+	if grpcServerAddress == "" {
+		grpcServerAddress = "grpc.dibbla.com:443" // default Dibbla cloud
+	}
+
+	// TLS defaults to true (required for grpc.dibbla.com:443)
+	// Set GRPC_USE_TLS=false for local/dev servers without TLS
+	grpcUseTLS := os.Getenv("GRPC_USE_TLS") != "false"
+
 	// HTTP server config (localhost only by default - no firewall prompt)
 	httpHost := os.Getenv("HTTP_HOST")
 	if httpHost == "" {
@@ -80,9 +90,12 @@ func main() {
 
 	// Create SDK server
 	log.Println("🔧 Creating SDK server...")
+	log.Printf("📡 Connecting to gRPC server: %s (TLS: %v)", grpcServerAddress, grpcUseTLS)
 	server, err := sdk.New(
 		sdk.WithServerName(serverName),
 		sdk.WithServerApiToken(serverApiToken),
+		sdk.WithGrpcServerAddress(grpcServerAddress),
+		sdk.WithGrpcTLS(grpcUseTLS),
 	)
 	if err != nil {
 		log.Fatalf("❌ Failed to create SDK server: %v", err)
