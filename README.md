@@ -1,4 +1,4 @@
-# Go Worker Starter Template
+# Go Worker Starter Template V0
 
 A production-ready Go template for building worker systems with gRPC, job orchestration, and embedded frontend support.
 
