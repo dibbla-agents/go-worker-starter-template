@@ -3,7 +3,7 @@ module github.com/dibbla-agents/go-worker-starter-template
 go 1.23.1
 
 require (
-	github.com/dibbla-agents/sdk-go v0.0.7
+	github.com/dibbla-agents/sdk-go v0.0.20
 	github.com/joho/godotenv v1.5.1
 	github.com/sashabaranov/go-openai v1.41.2
 )

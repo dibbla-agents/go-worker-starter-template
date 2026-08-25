@@ -15,7 +15,8 @@
 package config
 
 import (
-	"fmt"
+	// Uncomment when the validation example below needs it
+	// "fmt"
 	"os"
 
 	"github.com/joho/godotenv"

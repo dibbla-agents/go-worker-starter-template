@@ -13,7 +13,8 @@
 package models
 
 import (
-	"time"
+	// Uncomment when your models use time.Time
+	// "time"
 	// Uncomment if using GORM
 	// "gorm.io/gorm"
 )

@@ -15,11 +15,13 @@ import (
 	// Frontend and HTTP handlers (optional - remove if not using frontend)
 	"github.com/dibbla-agents/go-worker-starter-template/internal/frontend"
 	httpgreeting "github.com/dibbla-agents/go-worker-starter-template/internal/http_handlers/greeting"
-
 	// TODO: Import your worker functions here
 	// Example:
 	// myfunction "github.com/dibbla-agents/go-worker-starter-template/internal/worker_functions/my_function"
-
+	// ADVANCED (rare): capability providers — replace a platform built-in
+	// (custom tool_search ranking / memory selection). Most workers don't
+	// need this; see internal/providers/providers.go before enabling.
+	// "github.com/dibbla-agents/go-worker-starter-template/internal/providers"
 	// Advanced: For functions needing shared state (database, cache, etc.)
 	// "github.com/dibbla-agents/go-worker-starter-template/internal/state"
 	// workerfunctions "github.com/dibbla-agents/go-worker-starter-template/internal/worker_functions"
@@ -110,6 +112,11 @@ func main() {
 
 	// TODO: Register your functions here
 	// myfunction.Register(server)
+
+	// ADVANCED (rare): register the example capability providers. Leave this
+	// commented unless you are building a custom tool_search or memory
+	// implementation — built-ins cover normal workflows.
+	// providers.MustRegister(server)
 
 	// Advanced: For functions needing shared state (database, etc.)
 	// Uncomment the imports above and use:
