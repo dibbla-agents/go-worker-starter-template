@@ -1,0 +1,31 @@
+# Merges to main are instantly live: `dibbla create go-worker` clones main HEAD
+# with no version pinning. This CI is the safety gate — nothing that fails to
+# build may merge.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Build
+        run: go build ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Build with capability-provider example enabled
+        # The provider registration ships commented out (it is an advanced,
+        # opt-in feature). Uncomment it the way a user would and prove the
+        # example still compiles, so it can never rot silently.
+        run: |
+          sed -i 's|// "github.com/dibbla-agents/go-worker-starter-template/internal/capability_providers"|"github.com/dibbla-agents/go-worker-starter-template/internal/capability_providers"|' cmd/worker/main.go
+          sed -i 's|// capabilityproviders.MustRegister(server)|capabilityproviders.MustRegister(server)|' cmd/worker/main.go
+          gofmt -w cmd/worker/main.go
+          go build ./...
