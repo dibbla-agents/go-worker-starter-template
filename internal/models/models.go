@@ -13,17 +13,18 @@
 package models
 
 import (
-	// Uncomment when your models use time.Time
-	// "time"
-	// Uncomment if using GORM
-	// "gorm.io/gorm"
+// Uncomment when your models use time.Time
+// "time"
+// Uncomment if using GORM
+// "gorm.io/gorm"
 )
 
 // AllModels returns all models to be registered with GORM AutoMigrate.
 // Add any new models to this list to automatically create/update their tables.
 //
 // Usage in state/async_global_state.go:
-//   db.AutoMigrate(models.AllModels()...)
+//
+//	db.AutoMigrate(models.AllModels()...)
 func AllModels() []interface{} {
 	return []interface{}{
 		// TODO: Uncomment and add your models here
@@ -39,23 +40,23 @@ func AllModels() []interface{} {
 // type User struct {
 // 	// Primary key (auto-increment)
 // 	ID uint `gorm:"primaryKey;autoIncrement" json:"id"`
-// 	
+//
 // 	// Unique fields
 // 	Email    string `gorm:"uniqueIndex;not null" json:"email"`
 // 	Username string `gorm:"uniqueIndex;not null" json:"username"`
-// 	
+//
 // 	// Regular fields
 // 	Name     string `gorm:"size:255" json:"name"`
 // 	Age      int    `gorm:"default:0" json:"age"`
 // 	IsActive bool   `gorm:"default:true" json:"is_active"`
-// 	
+//
 // 	// Relationships
 // 	Tasks []Task `gorm:"foreignKey:UserID" json:"tasks,omitempty"`
-// 	
+//
 // 	// Timestamps (automatically managed by GORM)
 // 	CreatedAt time.Time `json:"created_at"`
 // 	UpdatedAt time.Time `json:"updated_at"`
-// 	
+//
 // 	// Soft delete (if deleted, DeletedAt is set instead of actual deletion)
 // 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 // }
@@ -68,14 +69,14 @@ func AllModels() []interface{} {
 // 	Title       string `gorm:"not null;size:255" json:"title"`
 // 	Description string `gorm:"type:text" json:"description"`
 // 	Status      string `gorm:"type:varchar(50);default:'pending';index" json:"status"` // pending, processing, completed, failed
-// 	
+//
 // 	// Foreign key relationship
 // 	UserID uint  `gorm:"not null;index" json:"user_id"`
 // 	User   *User `gorm:"constraint:OnDelete:CASCADE" json:"user,omitempty"`
-// 	
+//
 // 	// Has many relationship
 // 	Results []TaskResult `gorm:"foreignKey:TaskID" json:"results,omitempty"`
-// 	
+//
 // 	// Timestamps
 // 	CreatedAt   time.Time  `json:"created_at"`
 // 	UpdatedAt   time.Time  `json:"updated_at"`
@@ -89,16 +90,16 @@ func AllModels() []interface{} {
 // 	ID     uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 // 	TaskID uint   `gorm:"not null;index" json:"task_id"`
 // 	Task   *Task  `gorm:"constraint:OnDelete:CASCADE" json:"task,omitempty"`
-// 	
+//
 // 	// Result data
 // 	Output    string `gorm:"type:text" json:"output"`      // Success output
 // 	Error     string `gorm:"type:text" json:"error"`       // Error message if failed
 // 	Success   bool   `gorm:"default:false" json:"success"` // Whether task succeeded
 // 	Duration  int64  `gorm:"default:0" json:"duration"`    // Execution time in milliseconds
-// 	
+//
 // 	// Metadata
 // 	WorkerID string `gorm:"size:255;index" json:"worker_id"` // Which worker processed it
-// 	
+//
 // 	CreatedAt time.Time `json:"created_at"`
 // }
 
@@ -139,4 +140,3 @@ func AllModels() []interface{} {
 // func (User) TableName() string {
 //     return "custom_users_table"
 // }
-

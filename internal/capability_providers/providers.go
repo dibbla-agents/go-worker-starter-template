@@ -19,7 +19,7 @@
 // Data boundary: the memory seat receives the thread's FULL conversation
 // history on every bound agent turn. Treat a memory provider's worker as
 // holding user conversation data.
-package providers
+package capabilityproviders
 
 import (
 	"log"

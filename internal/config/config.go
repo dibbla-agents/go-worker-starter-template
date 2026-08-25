@@ -55,18 +55,18 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		// TODO: Uncomment and configure the fields you need
-		
+
 		// External API configuration
 		// APIKey:      os.Getenv("API_KEY"),
 		// APIBaseURL:  getEnvOrDefault("API_BASE_URL", "https://api.example.com/v1"),
-		
+
 		// Database configuration
 		// DatabaseURL: os.Getenv("DATABASE_URL"),
-		
+
 		// Worker configuration
 		// WorkerHost:  getEnvOrDefault("WORKER_HOST", "localhost"),
 		// WorkerPort:  getEnvOrDefault("WORKER_PORT", "50051"),
-		
+
 		// Application settings
 		// AppEnv:      getEnvOrDefault("APP_ENV", "development"),
 		// LogLevel:    getEnvOrDefault("LOG_LEVEL", "info"),
@@ -85,19 +85,19 @@ func Load() (*Config, error) {
 // TODO: Uncomment and add validation rules based on your required fields.
 func (c *Config) Validate() error {
 	// Example validations - uncomment and modify based on your requirements
-	
+
 	// if c.APIKey == "" {
 	// 	return fmt.Errorf("API_KEY is required")
 	// }
-	
+
 	// if c.DatabaseURL == "" {
 	// 	return fmt.Errorf("DATABASE_URL is required")
 	// }
-	
+
 	// if c.WorkerHost == "" {
 	// 	return fmt.Errorf("WORKER_HOST is required")
 	// }
-	
+
 	return nil
 }
 
