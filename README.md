@@ -12,15 +12,6 @@ A production-ready Go template for building worker systems with gRPC, job orches
 - **Docker Support** - Production-ready containerization
 - **Comprehensive Documentation** - Step-by-step guides for common tasks
 
-## 🔌 Want an MCP server instead?
-
-`_optional/mcp/` is a smaller starter for the other thing a worker can be: an
-MCP server of your own, published by the platform at
-`https://mcp.<your-dibbla-domain>/platform/servers/<name>` for the people your
-app's access list admits. `dibbla create mcp <name>` lifts it out as a project
-of its own; its [README](_optional/mcp/README.md) describes the flow and
-`access_policy`. Everything else in this repository is the general worker.
-
 ## 📋 Prerequisites
 
 - Go 1.23 or higher
