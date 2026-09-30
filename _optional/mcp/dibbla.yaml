@@ -1,0 +1,25 @@
+version: 1
+
+services:
+  mcp:
+    build: .
+    port: 8080
+    public: true
+
+    # This line publishes the tool server as an MCP of its own, at
+    # https://mcp.<your-dibbla-domain>/platform/servers/my-mcp
+    # It must be the same name as SERVER_NAME below.
+    mcp: my-mcp
+
+    # Who may use the MCP. It follows the app's access list:
+    #   all_members  every member of your organization
+    #   invite_only  only the people you add under "Access & users" in the
+    #                console, plus the organization's owners and admins
+    auth:
+      require_login: true
+      access_policy: all_members
+
+    environment:
+      SERVER_NAME: my-mcp
+      GRPC_SERVER_ADDRESS: grpc.dibbla.com:443
+      GRPC_USE_TLS: "true"
