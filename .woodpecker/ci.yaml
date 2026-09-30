@@ -1,0 +1,61 @@
+# go-worker-starter-template — gate on pull requests and on push to main.
+#
+# Replaces .github/workflows/ci.yml, deleted in the same commit: Woodpecker
+# on ci.dibbla.net is the only CI in the organisation.
+#
+# Merges to main are live at once: `dibbla create go-worker` and `dibbla
+# create mcp` clone main HEAD with no version pinning. Nothing that fails
+# here may merge.
+#
+# ⚠️ NEEDS NO SECRETS, and that is the design. Pipeline files live in the
+# repo, so whatever a PR pipeline can read, a contributor can read by editing
+# the pipeline. The image build below writes to the cache and pushes nothing.
+when:
+  - event: [pull_request, push]
+    branch: main
+
+steps:
+  # The general worker: what `dibbla create go-worker` hands over.
+  worker:
+    image: golang:1.25-alpine
+    environment:
+      GOWORK: "off"
+    commands:
+      - go build ./...
+      - go vet ./...
+      # The capability-provider registration ships commented out (advanced,
+      # opt-in). Uncomment it the way a user would and prove the example
+      # still compiles, so it can never rot silently.
+      - sed -i 's|// "github.com/dibbla-agents/go-worker-starter-template/internal/capability_providers"|"github.com/dibbla-agents/go-worker-starter-template/internal/capability_providers"|' cmd/worker/main.go
+      - sed -i 's|// capabilityproviders.MustRegister(server)|capabilityproviders.MustRegister(server)|' cmd/worker/main.go
+      - gofmt -w cmd/worker/main.go
+      - go build ./...
+
+  # The MCP server starter: a module of its own that `dibbla create mcp`
+  # lifts out. The worker's build ignores the directory, so it is gated here.
+  mcp:
+    image: golang:1.25-alpine
+    environment:
+      GOWORK: "off"
+    commands:
+      - cd _optional/mcp
+      - test -z "$(gofmt -l .)"
+      - go build ./...
+      - go vet ./...
+      - go test ./...
+      # `dibbla create mcp` rewrites these values; a template without them
+      # would hand the user a project that publishes nothing.
+      - |
+        grep -q '^    mcp: my-mcp$' dibbla.yaml
+        grep -q 'SERVER_NAME: my-mcp$' dibbla.yaml
+        grep -q 'GRPC_SERVER_ADDRESS: grpc.dibbla.com:443$' dibbla.yaml
+
+  mcp-image:
+    # The Dockerfile the platform builds the created project with.
+    image: docker:28-cli
+    commands:
+      - docker buildx create --use --name amd --driver remote tcp://oak-node.dibbla.net:31235
+      - |
+        docker buildx build ./_optional/mcp -f _optional/mcp/Dockerfile \
+          --platform linux/amd64 \
+          --output type=cacheonly
