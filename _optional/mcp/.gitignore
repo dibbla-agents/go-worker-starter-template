@@ -1,0 +1,11 @@
+# Local credentials
+.env
+
+# Build output
+/mcp
+*.test
+*.out
+
+.DS_Store
+.idea/
+.vscode/
