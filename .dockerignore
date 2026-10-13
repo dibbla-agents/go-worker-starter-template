@@ -1,0 +1,6 @@
+# .env holds local settings and credentials (SERVER_API_TOKEN). Kept out of
+# every image: baked in, it would ship the token and override what the
+# platform gives a deployed worker.
+.env
+.env.*
+!.env.example

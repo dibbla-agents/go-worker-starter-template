@@ -100,7 +100,7 @@ cp env.example .env
 ```
 
 Key common environment variables:
-- `GRPC_SERVER_ADDRESS` - gRPC server address
+- `GRPC_SERVER_ADDRESS` - gRPC server address (optional: leave unset when the worker is deployed on Dibbla, which connects it to the installation it runs on)
 - `SERVER_NAME` - Worker identifier
 - `SERVER_API_TOKEN` - API authentication token
 - `OPENAI_API_KEY` - OpenAI API key (if using AI features)
