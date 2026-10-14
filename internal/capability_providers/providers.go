@@ -11,7 +11,7 @@
 //	  memory: starter-recency-memory     # seat -> provider name
 //	  # NOTE: no history_policy line — binding a memory provider implies "custom"
 //
-// Requires sdk-go >= v0.0.20. To try these, uncomment the registration lines
+// Requires sdk-go >= v0.0.28. To try these, uncomment the registration lines
 // in cmd/worker/main.go. Both examples are deliberately "marker-style": their
 // effect is unmistakable in a run trace, so you can prove YOUR code ran
 // instead of the built-in before writing a real implementation.
@@ -22,6 +22,7 @@
 package capabilityproviders
 
 import (
+	"context"
 	"log"
 	"sort"
 	"strings"
@@ -43,7 +44,9 @@ func RecencyMemoryProvider() sdk.MemoryProvider {
 		Version:     "1.0.0",
 		// Token ceiling as a fraction of the model context (0 = platform default).
 		MaxHistoryFraction: 0.5,
-		Transform: func(currentMessage string, turns []sdk.Turn, tokenBudget int, meta sdk.ThreadMeta) ([]sdk.Turn, error) {
+		// ctx is cancelled when the platform gives up on the turn: stop work
+		// and commit no side effects once it is done.
+		Transform: func(ctx context.Context, currentMessage string, turns []sdk.Turn, tokenBudget int, meta sdk.ThreadMeta) ([]sdk.Turn, error) {
 			// Log what the engine sends so you can see the incoming shape
 			// before trusting your transform. This call also appears in the
 			// run-log dock as a capability_provider_call entry.

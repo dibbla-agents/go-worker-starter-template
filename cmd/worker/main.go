@@ -43,8 +43,13 @@ func loadEnvFile() error {
 		return err
 	}
 
-	// Set environment variables
+	// Set environment variables. A variable that is already set wins: .env
+	// is for local runs, and must never override what the platform gives a
+	// deployed worker (e.g. its own installation's gRPC address).
 	for k, v := range envMap {
+		if _, set := os.LookupEnv(k); set {
+			continue
+		}
 		os.Setenv(k, v)
 	}
 	return nil
@@ -64,20 +69,22 @@ func main() {
 		serverName = "worker-starter"
 	}
 
+	// Authentication: an API token when you run the worker yourself. Deployed
+	// on Dibbla, the platform mounts a workload identity token
+	// (DIBBLA_IDENTITY_TOKEN_FILE) and the SDK uses it, so no token is needed.
 	serverApiToken := os.Getenv("SERVER_API_TOKEN")
-	if serverApiToken == "" {
+	if serverApiToken == "" && os.Getenv("DIBBLA_IDENTITY_TOKEN_FILE") == "" {
 		log.Fatal("❌ SERVER_API_TOKEN environment variable is required")
 	}
 
-	// gRPC server config (for self-hosted servers)
+	// gRPC server address and TLS: set them only to choose a server yourself
+	// (a self-hosted one, or localhost:50051 with GRPC_USE_TLS=false). Left
+	// unset, the SDK decides: deployed on Dibbla it connects to the
+	// installation the worker runs on (DIBBLA_GRPC_SERVER_ADDRESS, set by the
+	// platform), run locally it defaults to grpc.dibbla.com:443 with TLS.
+	// Passing a default here would override the platform's address.
 	grpcServerAddress := os.Getenv("GRPC_SERVER_ADDRESS")
-	if grpcServerAddress == "" {
-		grpcServerAddress = "grpc.dibbla.com:443" // default Dibbla cloud
-	}
-
-	// TLS defaults to true (required for grpc.dibbla.com:443)
-	// Set GRPC_USE_TLS=false for local/dev servers without TLS
-	grpcUseTLS := os.Getenv("GRPC_USE_TLS") != "false"
+	grpcUseTLS := os.Getenv("GRPC_USE_TLS")
 
 	// HTTP server config (localhost only by default - no firewall prompt)
 	httpHost := os.Getenv("HTTP_HOST")
@@ -92,13 +99,22 @@ func main() {
 
 	// Create SDK server
 	log.Println("🔧 Creating SDK server...")
-	log.Printf("📡 Connecting to gRPC server: %s (TLS: %v)", grpcServerAddress, grpcUseTLS)
-	server, err := sdk.New(
-		sdk.WithServerName(serverName),
-		sdk.WithServerApiToken(serverApiToken),
-		sdk.WithGrpcServerAddress(grpcServerAddress),
-		sdk.WithGrpcTLS(grpcUseTLS),
-	)
+	opts := []sdk.Option{sdk.WithServerName(serverName)}
+	if serverApiToken != "" {
+		opts = append(opts, sdk.WithServerApiToken(serverApiToken))
+	}
+	if grpcServerAddress != "" {
+		log.Printf("📡 Connecting to gRPC server: %s", grpcServerAddress)
+		opts = append(opts, sdk.WithGrpcServerAddress(grpcServerAddress))
+	} else if platform := os.Getenv("DIBBLA_GRPC_SERVER_ADDRESS"); platform != "" {
+		log.Printf("📡 Connecting to this installation's gRPC server: %s", platform)
+	} else {
+		log.Println("📡 Connecting to the SDK's default gRPC server (grpc.dibbla.com:443)")
+	}
+	if grpcUseTLS != "" {
+		opts = append(opts, sdk.WithGrpcTLS(grpcUseTLS != "false"))
+	}
+	server, err := sdk.New(opts...)
 	if err != nil {
 		log.Fatalf("❌ Failed to create SDK server: %v", err)
 	}
