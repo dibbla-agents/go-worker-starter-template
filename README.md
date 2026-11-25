@@ -14,7 +14,7 @@ A production-ready Go template for building worker systems with gRPC, job orches
 
 ## 📋 Prerequisites
 
-- Go 1.23 or higher
+- Go 1.26 or higher
 - PostgreSQL (optional, for database features)
 - Docker & Docker Compose (optional, for containerized deployment)
 
