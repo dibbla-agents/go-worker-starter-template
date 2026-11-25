@@ -6,7 +6,7 @@ Quick guide to set up and run this worker template.
 
 ## Prerequisites
 
-- Go 1.23+
+- Go 1.26+
 - PostgreSQL (optional, for database features)
 
 ---

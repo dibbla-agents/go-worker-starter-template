@@ -4,7 +4,7 @@ Get a structured worker project running in 5 minutes.
 
 ## Prerequisites
 
-- [Go 1.23+](https://go.dev/dl/) installed
+- [Go 1.26+](https://go.dev/dl/) installed
 - Dibbla account with API token
 
 ## Step 1: Create Your Project
